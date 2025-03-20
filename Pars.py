@@ -8,7 +8,7 @@ import time
 
 # Настройка ChromeDriver
 options = webdriver.ChromeOptions()
-options.add_argument('--headless')  # Запуск в фоновом режиме без открытия окна браузера
+# options.add_argument('--headless')  # Комментируем эту строку, чтобы браузер открылся в видимом окне
 driver = webdriver.Chrome(options=options)
 
 def main():

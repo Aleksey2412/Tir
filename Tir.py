@@ -1,61 +1,36 @@
-import pygame
-import random
-import os
+import requests
+from bs4 import BeautifulSoup
 
-# Инициализация Pygame
-pygame.init()
+# Устанавливаем User-Agent, чтобы имитировать запрос от обычного браузера
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36'
+}
 
-# Константы
-WIDTH, HEIGHT = 800, 600
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-TARGET_RADIUS = 30
+# URL страницы с товарами
+base_url = "https://www.vamsvet.ru/catalog/section/standart-lamp/"
 
-# Создание экрана
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Тир")
+# Отправляем GET-запрос на сайт с указанием User-Agent
+response = requests.get(base_url, headers=headers)
 
-# Загрузка звука
-if os.path.exists("shot.wav"):
-    shot_sound = pygame.mixer.Sound("shot.wav")
-else:
-    shot_sound = None
+# Проверяем статус-код ответа
+if response.status_code != 200:
+    raise Exception(f"Request failed with status code {response.status_code}")
 
+# Парсим HTML-документ
+soup = BeautifulSoup(response.text, 'html.parser')
 
-# Функция для создания новой мишени
-def new_target():
-    return {
-        "x": random.randint(TARGET_RADIUS, WIDTH - TARGET_RADIUS),
-        "y": random.randint(TARGET_RADIUS, HEIGHT - TARGET_RADIUS)
-    }
+# Извлекаем все товары с карточки товаров
+products = soup.select(".product-list-item")
 
+for product in products:
+    # Название товара
+    title = product.select_one(".product-title").text.strip()
 
-target = new_target()
-score = 0
-running = True
+    # Цена товара
+    price = product.select_one(".price-current").text.strip()
 
-# Игровой цикл
-while running:
-    screen.fill(WHITE)
+    # Ссылка на товар
+    link = product.select_one(".product-link")["href"]
 
-    # Отрисовка мишени
-    pygame.draw.circle(screen, RED, (target["x"], target["y"]), TARGET_RADIUS)
-
-    # Обработка событий
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            mx, my = event.pos
-            dist = ((mx - target["x"]) ** 2 + (my - target["y"]) ** 2) ** 0.5
-            if dist <= TARGET_RADIUS:
-                if shot_sound:
-                    shot_sound.play()
-                score += 1
-                target = new_target()
-
-    # Обновление экрана
-    pygame.display.flip()
-
-# Завершение Pygame
-pygame.quit()
+    # Выводим результат
+    print(f"Название: {title}\nЦена: {price}\nСсылка: {link}\n")
