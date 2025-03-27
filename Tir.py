@@ -1,4 +1,5 @@
 import requests
+import csv
 from bs4 import BeautifulSoup
 
 # Устанавливаем User-Agent, чтобы имитировать запрос от обычного браузера
@@ -22,6 +23,9 @@ soup = BeautifulSoup(response.text, 'html.parser')
 # Извлекаем все товары с карточки товаров
 products = soup.select(".product-list-item")
 
+# Подготовка списка для хранения данных
+data = []
+
 for product in products:
     # Название товара
     title = product.select_one(".product-title").text.strip()
@@ -32,5 +36,18 @@ for product in products:
     # Ссылка на товар
     link = product.select_one(".product-link")["href"]
 
-    # Выводим результат
-    print(f"Название: {title}\nЦена: {price}\nСсылка: {link}\n")
+    # Добавление данных в список
+    data.append({
+        'title': title,
+        'price': price,
+        'link': link
+    })
+
+# Сохранение данных в CSV-файл
+with open('products.csv', 'w', newline='', encoding='utf-8') as file:
+    fieldnames = ['title', 'price', 'link']
+    writer = csv.DictWriter(file, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(data)
+
+print("Данные сохранены в файл 'products.csv'.")
